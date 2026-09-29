@@ -1,0 +1,214 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: "One row per customer, enriched with geolocation."
+    columns:
+      - name: customer_key
+        description: "Surrogate key for the customer dimension."
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('customers')
+                field: customer_id
+              config:
+                severity: warn
+      - name: customer_zip_code_prefix
+        tests:
+          - not_null
+
+  - name: dim_sellers
+    description: "One row per seller, enriched with geolocation."
+    columns:
+      - name: seller_key
+        tests:
+          - unique
+          - not_null
+      - name: seller_id
+        tests:
+          - unique
+          - not_null
+      - name: seller_zip_code_prefix
+        tests:
+          - not_null
+
+  - name: dim_products
+    description: "One row per product."
+    columns:
+      - name: product_key
+        tests:
+          - unique
+          - not_null
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('products')
+                field: product_id
+
+      - name: product_category
+        tests:
+          - not_null
+
+  - name: fact_orders
+    description: "One row per order."
+    columns:
+      - name: order_id
+        data_tests:
+          - not_null
+          - unique
+
+      - name: customer_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_key
+
+      - name: order_status
+        data_tests:
+          - not_null
+
+      - name: order_purchase_ts
+        data_tests:
+          - not_null
+
+
+  - name: fact_order_items
+    description: "One row per order item."
+    columns:
+      - name: order_item_key
+        data_tests:
+          - not_null
+          - unique
+
+      - name: order_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fact_orders')
+                field: order_id
+
+      - name: customer_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_key
+
+      - name: product_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_products')
+                field: product_key
+
+      - name: seller_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_sellers')
+                field: seller_key
+
+      - name: order_item_id
+        data_tests:
+          - not_null
+
+      - name: price
+        data_tests:
+          - not_null
+
+      - name: freight_value
+        data_tests:
+          - not_null
+
+
+  - name: fact_payments
+    description: "One row per payment."
+    columns:
+      - name: payment_key
+        data_tests:
+          - not_null
+          - unique
+
+      - name: order_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fact_orders')
+                field: order_id
+
+      - name: customer_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_key
+
+      - name: payment_sequential
+        data_tests:
+          - not_null
+
+      - name: payment_type
+        data_tests:
+          - not_null
+
+      - name: payment_installments
+        data_tests:
+          - not_null
+
+      - name: payment_value
+        data_tests:
+          - not_null
+
+
+  - name: fact_reviews
+    description: "One row per review."
+    columns:
+      - name: review_id
+        data_tests:
+          - not_null
+          - unique:
+              config:
+                severity: warn
+
+      - name: order_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fact_orders')
+                field: order_id
+              config:
+                severity: warn
+
+      - name: customer_key
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_key
+              config:
+                severity: warn
+
+      - name: review_score
+        data_tests:
+          - not_null

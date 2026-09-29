@@ -1,0 +1,17 @@
+# Core Database & Object Storage
+psycopg2-binary>=2.9.9    # PostgreSQL database adapter
+sqlalchemy>=2.0.30       # SQL toolkit and Object-Relational Mapper (ORM)
+minio>=7.2.0             # MinIO object storage SDK
+boto3>=1.34.0            # AWS SDK for Python (S3 operations)
+sqlite-utils>=4.1.1
+uvicorn>=0.51.0
+
+# Data Processing & Environment
+pandas>=2.2.0            # Data analysis and DataFrame engine
+pyarrow>=15.0.0          # Columnar memory (Apache Arrow) & Parquet support
+python-dotenv>=1.0.0     # Environment variable management via .env files
+pydantic>=2.7.0          # Data validation using Python type hints
+requests>=2.32.2         # Synchronous HTTP library for REST APIs
+fastapi>=0.140.0         # High-performance API web framework
+s3fs>=2026.6.0           # File-system interface for direct S3 object access
+pyyaml>=6.0.3            # YAML parser and emitter for configuration files

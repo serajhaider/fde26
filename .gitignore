@@ -1,0 +1,11 @@
+.myenv/
+__pycache__/
+*.pyc
+.env
+logs/
+transform/target/
+transform/dbt_packages/
+transform/logs/
+*:Zone.Identifier
+producer/data/
+producer/data/

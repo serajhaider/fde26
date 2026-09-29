@@ -1,0 +1,95 @@
+services:
+  # 1. Operational Source DB (The Black-Box E-commerce Backend)
+  # ________________________________________________________________________________________
+  postgres_oltp:
+    image: postgres:17
+    container_name: postgres_oltp
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB_OLTP}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB_OLTP}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_oltp_data:/var/lib/postgresql/data
+    networks:
+      - pg_network
+  api:
+    image: python:3.12-slim
+    container_name: api
+    ports:
+      - "8001:8001"
+    volumes:
+      # Mount data folder containing your .db file
+      - ./producer/data:/app/data:ro
+      # Mount the FastAPI script
+      - ./producer/app/api.py:/app/api.py:ro
+    command: >
+      bash -c "pip install --no-cache-dir fastapi uvicorn && 
+                uvicorn api:app --host 0.0.0.0 --port 8001 --app-dir /app"
+    restart: unless-stopped
+    
+  # You Donot need to worry about these 2 container. Their sole purpose is to fasilate the Data 
+  # production Simulation. Just to make our dead data alive again..
+  #_________________________________________________________________________________________
+
+
+  #  Analytics Target DB 
+  postgres_analytics:
+    image: postgres:17
+    container_name: postgres_analytics
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB_ANALYTICS}
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB_ANALYTICS}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_analytics_data:/var/lib/postgresql/data
+    networks:
+      - pg_network
+
+  # 4. Object Storage Data Lake
+  minio:
+    image: pgsty/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    ports:
+      - "9090:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    volumes:
+      - minio_data:/data
+    networks:
+      - pg_network
+
+volumes:
+  postgres_oltp_data:
+    driver: local
+  postgres_analytics_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  pg_network:
+    driver: bridge

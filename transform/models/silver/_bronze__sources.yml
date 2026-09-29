@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: bronze
+    schema: bronze
+    tables:
+      - name: pg_customers
+      - name: pg_orders
+      - name: pg_order_items
+      - name: pg_products
+      - name: pg_sellers
+      - name: stream_order_payments
+      - name: stream_order_reviews
+      - name: api_geolocation
+      - name: api_translations

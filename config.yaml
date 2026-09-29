@@ -1,0 +1,43 @@
+# ---------------------------------------------------------
+# Unified Global Configuration
+# Resolves environment variables from .env with container fallbacks
+# ---------------------------------------------------------
+
+simulation:
+  sim_speed: 3600  # 3600 for 1 hour in sec, 86400 for 1 day in sec , 604800 week in seconds
+  preload_watermark: "2017-01-15 00:00:00" # Directly load data upto this timestamp into the database before starting the simulation.
+  data_dir: "./producer/data"
+
+database:
+  oltp:
+    host: "${POSTGRES_HOST}"
+    port: "${POSTGRES_PORT_OLTP}"
+    name: "${POSTGRES_DB_OLTP}"
+    user: "${POSTGRES_USER}"
+    password: "${POSTGRES_PASSWORD}"
+    oltp_url: "postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT_OLTP}/${POSTGRES_DB_OLTP}"
+  analytics:
+    host: "${POSTGRES_HOST}"
+    port: "${POSTGRES_PORT_ANALYTICS}"
+    name: "${POSTGRES_DB_ANALYTICS}"
+    user: "${POSTGRES_USER}"
+    password: "${POSTGRES_PASSWORD}"
+    analytics_url: "postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT_ANALYTICS}/${POSTGRES_DB_ANALYTICS}"
+
+pgadmin:
+  email: "${PGADMIN_EMAIL}"
+  password: "${PGADMIN_PASSWORD}"
+
+api:
+  fastapi_url: "${FASTAPI_URL}"
+  
+
+storage:
+  minio_endpoint: "${MINIO_ENDPOINT:minio:9090}"
+  minio_root_user: "${MINIO_ROOT_USER}"
+  minio_root_password: "${MINIO_ROOT_PASSWORD}"
+  # Uses root user/password if access/secret keys are left empty in .env
+  minio_access_key: "${MINIO_ACCESS_KEY}"
+  minio_secret_key: "${MINIO_SECRET_KEY}"
+  shared_bucket: "${SHARED_BUCKET}"
+  bronze_bucket: "${BRONZE_BUCKET}"

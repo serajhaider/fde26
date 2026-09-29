@@ -1,0 +1,185 @@
+version: 2
+
+models:
+  - name: silver_sellers
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: seller_id
+        data_type: varchar(32)
+        constraints:
+          - type: primary_key
+        tests:
+          - unique
+          - not_null
+
+      - name: seller_zip_code_prefix
+        data_type: decimal(5)
+        constraints:
+          - type: not_null
+        tests: 
+          - not_null 
+      
+      - name: seller_city
+        data_type: varchar(100)
+      - name: seller_state
+        data_type: varchar(2)
+
+  - name: silver_customers
+    config: 
+      contract:
+        enforced: true
+
+    columns:
+      - name: customer_id
+        data_type: varchar(32)
+        constraints:
+          - type: primary_key
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_unique_id
+        data_type: varchar(32)
+        tests:
+          - not_null
+
+      - name: customer_zip_code_prefix
+        data_type: decimal(5,0)
+      - name: customer_city
+        data_type: varchar(50)
+      - name: customer_state
+        data_type: varchar(2)
+    
+  - name: silver_products
+    columns:
+      - name: product_id
+        tests:
+          - not_null
+          - unique
+
+  - name: silver_orders
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+          - unique
+        
+      - name: customer_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('silver_customers')
+                field: customer_id
+              config:
+                severity: warn
+
+      - name: order_status
+        tests:
+          - accepted_values: 
+              arguments:
+                values: ['shipped',
+                  'canceled',
+                  'delivered',
+                  'invoiced',
+                  'unavailable',
+                  'processing',
+                  'approved',
+                  'created']
+              
+  - name: silver_order_items
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+      - name: order_item_id
+        tests:
+          - not_null
+      - name: product_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('silver_products')
+                field: product_id
+              config:
+                severity: warn 
+      - name: seller_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('silver_sellers')
+                field: seller_id
+              config:
+                severity: warn 
+   
+    tests:
+      - unique:
+          column_name: "order_id || '-' || order_item_id"
+
+  - name: silver_order_payments
+    config:
+      contract:
+        enforced: true
+    constraints:
+      - type: primary_key
+        columns: [order_id,payment_sequential]
+    columns:
+      - name: order_id
+        data_type: varchar(32)
+        constraints:
+          - type: not_null
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_orders')
+                field: order_id
+              config:
+                severity: warn
+      
+      - name: payment_sequential
+        data_type: int
+        constraints:
+          - type: not_null
+        tests:
+          - not_null
+
+      - name: payment_type
+        data_type: varchar(20)
+      - name: payment_installments
+        data_type: int
+      - name: payment_value
+        data_type: numeric(10,2)
+    tests:
+      - unique:
+          column_name: "order_id || '-' || payment_sequential"
+      
+  - name: silver_order_reviews
+    tests:
+      - unique:
+          column_name: "review_id || '-' || order_id"
+    columns:
+      - name: review_id
+        tests:
+          - not_null
+      - name: order_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('silver_orders')
+                field: order_id
+              config:
+                severity: warn
+                          # Known data quality gap in raw Olist dataset:
+                          # 2 order_reviews rows reference an order_id not present in orders table.
+                          # Confirmed present in bronze (not introduced by silver transform).
+
+  - name: silver_geolocation
+    columns:
+      - name: geolocation_zip_code_prefix
+        tests:
+          - not_null
+          - unique
+

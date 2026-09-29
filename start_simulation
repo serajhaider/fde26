@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+SESSION="fde26_producer"
+
+cleanup() {
+    echo "Stopping FastAPI and simulator..."
+    tmux kill-session -t "$SESSION" 2>/dev/null || true
+}
+
+# Run cleanup when the script exits or the terminal window is closed
+trap cleanup EXIT HUP INT TERM
+
+# 1. Clean up any previous session
+tmux kill-session -t "$SESSION" 2>/dev/null || true
+
+# 2. Create session
+tmux new-session -d -s "$SESSION"
+
+# 3. Left pane (FastAPI)
+tmux send-keys -t "$SESSION:0.0" "source .myenv/bin/activate" C-m
+tmux send-keys -t "$SESSION:0.0" \
+    "uvicorn producer.app.main:app --reload --port 8000" C-m
+
+# 4. Right pane (Simulator)
+tmux split-window -h -t "$SESSION"
+tmux send-keys -t "$SESSION:0.1" "source .myenv/bin/activate" C-m
+tmux send-keys -t "$SESSION:0.1" \
+    "sleep 2 && python -m producer.simulate.main" C-m
+
+# 5. Focus left pane
+tmux select-pane -t "$SESSION:0.0"
+
+echo "🚀 Attaching to simulation session..."
+echo "Closing this terminal will stop both services."
+
+# Do not use exec here.
+# The script must stay alive so the cleanup trap can run.
+tmux attach-session -t "$SESSION"
